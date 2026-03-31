@@ -3,4 +3,4 @@ node_modules/
 package-lock.json
 *.json
 !package.json
-data/
+!data/reviews.json
