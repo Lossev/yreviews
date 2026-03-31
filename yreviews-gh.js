@@ -33,14 +33,23 @@ async function getYandexReviews(url) {
     
     while (noChangeCount < 25) {
         await page.evaluate(() => {
-            const reviewsContainer = document.querySelector('.card-reviews-view');
-            if (reviewsContainer) {
-                reviewsContainer.scrollTop = reviewsContainer.scrollHeight;
-            }
-            document.querySelectorAll('.card-reviews-view, [class*="scroll"]').forEach(el => {
-                el.scrollTop = el.scrollHeight;
+            const selectors = [
+                '.card-reviews-view',
+                '.scroll__content',
+                '[class*="scroll"]',
+                '.business-list',
+                '[data-scrollable]'
+            ];
+            
+            selectors.forEach(sel => {
+                document.querySelectorAll(sel).forEach(el => {
+                    if (el.scrollHeight > el.clientHeight) {
+                        el.scrollTop = el.scrollHeight;
+                    }
+                });
             });
-            window.scrollBy(0, 800);
+            
+            window.scrollTo(0, document.body.scrollHeight);
         });
         
         await wait(2000);
