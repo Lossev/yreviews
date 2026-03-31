@@ -9,7 +9,7 @@ on:
       org_id:
         description: 'Organization ID'
         required: false
-        default: '237134553662'
+        default: '58302385598'
 
 jobs:
   fetch-reviews:
