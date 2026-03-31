@@ -118,10 +118,7 @@ async function main() {
     try {
         const reviews = await getYandexReviews(url);
         
-        if (reviews.length === 0) {
-            console.log('Отзывов не найдено');
-            return;
-        }
+        console.log(`Найдено отзывов: ${reviews.length}`);
         
         const formatted = reviews.map((r, i) => ({
             num: i + 1,
@@ -141,6 +138,7 @@ async function main() {
         const dataDir = path.join(__dirname, 'data');
         if (!fs.existsSync(dataDir)) {
             fs.mkdirSync(dataDir, { recursive: true });
+            console.log('Создана папка data/');
         }
         
         const filename = path.join(dataDir, 'reviews.json');
