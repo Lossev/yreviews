@@ -29,7 +29,8 @@ async function main() {
     console.log('Загрузка страницы...');
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 90000 });
     
-    await wait(3000);
+    console.log('Ожидание загрузки отзывов (7 сек)...');
+    await wait(7000);
     
     let reviews = [];
     let previousCount = 0;
