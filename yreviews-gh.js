@@ -12,7 +12,7 @@ async function main() {
     console.log('URL:', url);
     
     const browser = await puppeteer.launch({
-        headless: false,
+        headless: true,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -27,10 +27,32 @@ async function main() {
     await page.setViewport({ width: 1920, height: 1080 });
     
     console.log('Загрузка страницы...');
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 90000 });
+    let retries = 3;
+    while (retries > 0) {
+        try {
+            await page.goto(url, { waitUntil: 'networkidle2', timeout: 90000 });
+            break;
+        } catch (e) {
+            retries--;
+            console.log(`Ошибка загрузки, попыток осталось: ${retries}`);
+            if (retries === 0) throw e;
+            await wait(3000);
+        }
+    }
     
     console.log('Ожидание загрузки отзывов (7 сек)...');
     await wait(7000);
+    
+    console.log('Выбор сортировки "По новизне"...');
+    try {
+        await page.click('.rating-ranking-view');
+        await wait(500);
+        await page.click('.rating-ranking-view__popup-line[aria-label="По новизне"]');
+        console.log('Сортировка применена, ожидание загрузки (6 сек)...');
+        await wait(6000);
+    } catch (e) {
+        console.log('Не удалось сменить сортировку, продолжаем как есть:', e.message);
+    }
     
     let reviews = [];
     let previousCount = 0;
