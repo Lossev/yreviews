@@ -5,8 +5,8 @@ const path = require('path');
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
 async function main() {
-    const orgId = process.argv[2] || '58302385598';
-    const url = `https://yandex.ru/maps/org/${orgId}/?mode=reviews`;
+    const url = 'https://yandex.ru/maps/org/sibir_tsentr/58302385598/reviews';
+    const orgId = '58302385598';
     
     console.log('Запуск браузера...');
     console.log('URL:', url);
