@@ -4,6 +4,10 @@ const path = require('path');
 
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
+function getReviewKey(r) {
+    return `${r.author}|${r.rating}|${r.date}|${(r.text || '').substring(0, 50)}`;
+}
+
 async function main() {
     const url = 'https://yandex.ru/maps/org/sibir_tsentr/58302385598/reviews';
     const orgId = '58302385598';
@@ -135,6 +139,15 @@ async function main() {
         return;
     }
     
+    reviews.sort((a, b) => new Date(b.date) - new Date(a.date));
+    console.log('Отсортировано по дате (новые сверху)');
+    
+    const dataDir = path.join(__dirname, 'data');
+    if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+        console.log('Создана папка data/');
+    }
+    
     const formatted = reviews.map((r, i) => ({
         num: i + 1,
         author: r.author,
@@ -150,21 +163,92 @@ async function main() {
         reviews: formatted
     };
     
-    const dataDir = path.join(__dirname, 'data');
-    if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
-        console.log('Создана папка data/');
-    }
-    
     const filename = path.join(dataDir, 'reviews.json');
     fs.writeFileSync(filename, JSON.stringify(data, null, 2), 'utf8');
     
     console.log(`\nСохранено ${reviews.length} отзывов в data/reviews.json`);
     
-    if (reviews.length > 0) {
-        console.log('\nПоследние 3 отзыва:');
-        reviews.slice(-3).forEach(r => {
-            console.log(`${r.author} | ${r.rating}⭐`);
+    console.log('\n=== Слияние с reviews-full.json ===');
+    
+    const reviewsFullPath = path.join(dataDir, 'reviews-full.json');
+    let existingReviews = [];
+    let previousTotal = 0;
+    
+    if (fs.existsSync(reviewsFullPath)) {
+        console.log('Загрузка reviews-full.json...');
+        const fullData = JSON.parse(fs.readFileSync(reviewsFullPath, 'utf8'));
+        existingReviews = fullData.reviews || [];
+        previousTotal = existingReviews.length;
+        console.log(`Загружено: ${existingReviews.length} отзывов`);
+    } else {
+        console.log('Файл reviews-full.json не найден, будет создан новый');
+    }
+    
+    const existingKeys = new Set();
+    existingReviews.forEach(r => {
+        existingKeys.add(getReviewKey(r));
+    });
+    
+    const newReviews = [];
+    reviews.forEach(r => {
+        const key = getReviewKey(r);
+        if (!existingKeys.has(key)) {
+            newReviews.push(r);
+            existingKeys.add(key);
+        }
+    });
+    
+    console.log(`Найдено новых отзывов: ${newReviews.length}`);
+    
+    if (newReviews.length > 0) {
+        console.log('Новые отзывы:');
+        newReviews.forEach(r => {
+            console.log(`  - ${r.author} | ${r.rating}⭐ | ${r.date}`);
+        });
+    }
+    
+    const allReviews = [...existingReviews, ...newReviews];
+    
+    const seen = new Set();
+    const uniqueReviews = allReviews.filter(r => {
+        const key = getReviewKey(r);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+    
+    uniqueReviews.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    const formattedFull = uniqueReviews.map((r, i) => ({
+        num: i + 1,
+        author: r.author,
+        rating: r.rating,
+        date: r.date,
+        text: r.text
+    }));
+    
+    const result = {
+        lastUpdated: new Date().toISOString(),
+        orgId: orgId,
+        totalReviews: formattedFull.length,
+        newReviewsCount: newReviews.length,
+        previousTotal: previousTotal,
+        reviews: formattedFull
+    };
+    
+    const outputPath = path.join(dataDir, 'reviews-full-now.json');
+    fs.writeFileSync(outputPath, JSON.stringify(result, null, 2), 'utf8');
+    
+    console.log(`\n=== Итог ===`);
+    console.log(`Было в reviews-full: ${previousTotal}`);
+    console.log(`Добавлено новых: ${newReviews.length}`);
+    console.log(`Итого: ${formattedFull.length}`);
+    console.log(`\nСохранено в: data/reviews-full-now.json`);
+    
+    if (formattedFull.length > 0) {
+        console.log('\nПервые 3 отзыва:');
+        formattedFull.slice(0, 3).forEach(r => {
+            console.log(`  ${r.num}. ${r.author} | ${r.rating}⭐ | ${r.date}`);
         });
     }
 }
