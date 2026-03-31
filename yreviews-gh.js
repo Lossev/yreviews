@@ -65,9 +65,17 @@ async function main() {
                 let rating = 0;
                 const ratingEl = el.querySelector('[itemprop="reviewRating"] [itemprop="ratingValue"]');
                 if (ratingEl) {
-                    rating = parseInt(ratingEl.textContent) || 0;
-                } else {
-                    const stars = el.querySelectorAll('.business-rating-icon-view__star._full');
+                    rating = parseInt(ratingEl.getAttribute('content') || ratingEl.textContent) || 0;
+                }
+                if (!rating) {
+                    const starsEl = el.querySelector('.business-rating-badge-view__stars[aria-label]');
+                    if (starsEl) {
+                        const match = starsEl.getAttribute('aria-label').match(/\d+/);
+                        rating = match ? parseInt(match[0]) : 0;
+                    }
+                }
+                if (!rating) {
+                    const stars = el.querySelectorAll('.business-rating-badge-view__star._full');
                     rating = stars ? stars.length : 0;
                 }
                 
