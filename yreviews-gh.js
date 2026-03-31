@@ -1,6 +1,9 @@
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const fs = require('fs');
 const path = require('path');
+
+puppeteer.use(StealthPlugin());
 
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
@@ -60,6 +63,19 @@ async function getYandexReviews(url) {
 }
 
 async function extractReviews(page) {
+    const html = await page.content();
+    console.log(`HTML длина: ${html.length}`);
+    
+    const allElements = await page.evaluate(() => {
+        return {
+            businessReview: document.querySelectorAll('.business-review-view').length,
+            reviewWrapper: document.querySelectorAll('[class*="review"]').length,
+            cardReviews: document.querySelectorAll('.card-reviews-view').length,
+            bodyText: document.body.innerText.substring(0, 500)
+        };
+    });
+    console.log('Элементы на странице:', JSON.stringify(allElements));
+    
     return await page.evaluate(() => {
         const reviewElements = document.querySelectorAll('.business-review-view');
         const reviews = [];
