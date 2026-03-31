@@ -4,3 +4,5 @@ package-lock.json
 *.json
 !package.json
 !data/reviews.json
+*.js
+!yreviews-gh.js
