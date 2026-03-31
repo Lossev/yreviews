@@ -1,0 +1,41 @@
+name: Fetch Yandex Reviews
+
+on:
+  schedule:
+    - cron: '0 0-7 * * *'
+    - cron: '0,36 8-23 * * *'
+  workflow_dispatch:
+    inputs:
+      org_id:
+        description: 'Organization ID'
+        required: false
+        default: '237134553662'
+
+jobs:
+  fetch-reviews:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: npm install puppeteer
+      
+      - name: Fetch reviews
+        run: node yreviews-gh.js "${{ github.event.inputs.org_id || '237134553662' }}"
+        env:
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: false
+      
+      - name: Commit changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add -A
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update reviews - $(date '+%Y-%m-%d %H:%M')"
+          git push

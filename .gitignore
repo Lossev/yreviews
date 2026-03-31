@@ -1,0 +1,6 @@
+node_modules/
+*.html
+package-lock.json
+*.json
+!package.json
+data/
